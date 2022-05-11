@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('my-whatsapp-test:server');
 var http = require('http');
+const { startIoConnecting } = require('../socket/whatsapp');
+// const { Server } = require("socket.io");
 
 /**
  * Get port from environment and store in Express.
@@ -20,6 +22,47 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+// const io = new Server(server, {
+//   cors: {
+//     origin: "http://localhost:3006",
+//     methods: ["GET", "POST"]
+//   }
+// });
+
+// io.on('connection', (socket) => {
+//   socket.on("open_channel_whatsapp", (data) => {
+//     // socket.join(data);
+//     console.log(`User with ID: ${socket.id} joined room: ${data}`);
+//   });
+//   console.log('a user connected: ' + socket.id);
+//   socket.on('disconnect', () => {
+//     console.log('user disconnected - id: ' + socket.id);
+//   });
+// });
+
+const io = require('../socket')
+  .init(server, {
+    cors: {
+      origin: "http://localhost:3006",
+      methods: ["GET", "POST"]
+    }
+  });
+
+io.on('connection', socket => {
+  // socket.on("open_channel_whatsapp", (data) => {
+  //   // socket.join(data);
+  //   console.log(`open_channel_whatsapp WWW..: ${socket.id} joined room: ${data}`);
+  // });
+  console.log('a user connected: ' + socket.id);
+  startIoConnecting(socket);
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected - id: ' + socket.id);
+  });
+});
+
+
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -88,3 +131,5 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+// module.exports = server;
