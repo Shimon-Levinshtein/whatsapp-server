@@ -8,6 +8,7 @@ const userSchema = new Schema({
     mail: String,
     password: String,
     phone: String,
+    token: String,
 });
 
 const User = mongoose.model('User', userSchema);

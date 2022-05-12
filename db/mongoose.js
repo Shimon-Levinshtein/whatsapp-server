@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-mongoose.connect(`mongodb+srv://whatsappWebDB:${process.env.PASSWORD_MONGOOSE}@cluster0.cojo6.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`)
+mongoose.connect(`mongodb+srv://whatsappWebDB:${process.env.PASSWORD_MONGOOSE}@cluster0.cojo6.mongodb.net/whatsappWebDB?retryWrites=true&w=majority`)
     .then(() => {
         console.log('Connected to MongoDB');
     }).catch(err => {

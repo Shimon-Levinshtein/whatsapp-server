@@ -8,11 +8,13 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/sing-up', function (req, res, next) {
+
+
   creatUser(req.body).then(data => {
-      res.send(data); // send the qr code as json
+      res.send(data); 
     }).catch(err => {
       console.log(err);
-      res.status(500).json({ err });
+      res.status(500).send({ error: err })
     });
 });
 
