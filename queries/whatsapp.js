@@ -23,7 +23,7 @@ module.exports.getWhatsappQrCode = async () => {
             });
         } catch (error) {
             console.log('error!!!!!!!!!!!!!!!!!', error);
-            reject(err);
+            reject(error.message);
 
         }
     })
