@@ -29,7 +29,7 @@ class WebWhatsapp {
                 this.countSendQr++;
                 console.log('QR RECEIVED', qr);
                 console.log('countSendQr -->> ', this.countSendQr);
-                if (this.countSendQr > 9) {
+                if (this.countSendQr > 1) {
                     console.log('this.client.destroy()');
                     this.client.destroy();
                     this.countSendQr = 0;
@@ -73,9 +73,17 @@ class WebWhatsapp {
         this.socket.on(`check_interval_whatsapp_connection_status_id:${this.userId}`, () => {
             this.socket.emit(`res_interval_whatsapp_connection_status_id:${this.userId}`, { status: this.isConnected });
         });
+        this.socket.on(`request_qr_code_id:${this.userId}`, () => {
+            if (!this.isConnected && this.countSendQr == 0) {
+                this.getWhatsappQrCode();
+            }
+        });
     };
     changeSocket(socket) {
         if (this.socketId !== socket.id) {
+            if (this.socketId) {
+                this.socket.emit(`another_socket_we_enter_id:${this.userId}`, {});
+            };
             this.socket = socket;
             this.socketId = socket.id;
             this.openChannels();
@@ -93,8 +101,8 @@ class WebWhatsapp {
 User.find({}).then(users => {
     users.forEach(user => {
         const userClass = new WebWhatsapp({
-            socketId: 'socket.id',
-            socket: 'socket',
+            socketId: '',
+            socket: '',
             userId: user._id.toString(),
             name: user.name,
             lestName: user.lestName,

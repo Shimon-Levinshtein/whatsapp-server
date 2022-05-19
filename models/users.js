@@ -9,6 +9,7 @@ const userSchema = new Schema({
     password: String,
     phone: String,
     token: String,
+    resetPasswordToken: String,
 });
 
 const User = mongoose.model('User', userSchema);

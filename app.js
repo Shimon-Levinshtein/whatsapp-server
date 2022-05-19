@@ -10,6 +10,9 @@ require('dotenv').config();
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const whatsappConnectionRouter = require('./routes/whatsapp/connection');
+const { sendGoogleEmail } = require('./controllers/mail/sendMail');
+const { handlebarsSendGoogleEmail } = require('./controllers/mail/ddd');
+const { sendGoogleEmailEjs } = require('./controllers/mail/sendMailEjs');
 
 
 const app = express();
@@ -48,5 +51,17 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// sendGoogleEmailEjs({
+//   to: 'shimonwebdeveloper@gmail.com',
+//    subject: 'Welcome 4',
+//    templetName: 'registered',
+//     dataTemplet: {
+//       title: 'registered 17',
+//       message: 'Successfully registered :)',
+//       link: process.env.CLINTE_URL,
+//     }
+// });
+
 
 module.exports = app;
