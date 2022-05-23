@@ -38,7 +38,6 @@ const sendGoogleEmail = async ({to, subject, templetName, dataTemplet}) => {
         from: process.env.MAIL_NANAGEMENT,
         to: to,
         subject: subject,
-        // text: text,
         html: ejsTemplate
     };
 

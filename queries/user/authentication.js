@@ -117,8 +117,13 @@ module.exports.sendResetPassword = obj => {
                 reject(error.message);
             }
             if (user) {
-                const token = jwt.sign({ mail: obj.data.mail.toLowerCase(), userId: user._id.toString() }, process.env.ENCRYPTED_TOKEN, { expiresIn: '1h' });
-                user.update({ resetPasswordToken: token })
+                let verifyToken;
+                try {
+                    verifyToken = jwt.sign({ mail: obj.data.mail.toLowerCase(), userId: user._id.toString() }, process.env.ENCRYPTED_TOKEN_SRESET_PASSWORD, { expiresIn: '1h' });
+                } catch (error) {
+                    reject(error.message);
+                };
+                user.update({ resetPasswordToken: verifyToken })
                     .then(() => {
                         try {
                             sendGoogleEmailEjs({
@@ -128,15 +133,15 @@ module.exports.sendResetPassword = obj => {
                                 dataTemplet: {
                                     title: 'Reset Password',
                                     message: 'Click the password reset button, the link is only valid for one hour.',
-                                    link: `${process.env.CLINTE_URL}/change-password/${user.mail}/${token}`,
+                                    link: `${process.env.CLINTE_URL}/change-password/${user.mail}/${verifyToken}`,
                                 }
                             });
-                            resolve();
                         } catch (error) {
                             reject(error.message);
                         }
+                        resolve();
                     }).catch(err => {
-                        reject(error.message);
+                        reject(err.message);
                     });
             } else {
                 reject('Email does not exist');
@@ -151,27 +156,25 @@ module.exports.changePassword = obj => {
                 reject(error.message);
             }
             if (user) {
-                // const token = jwt.sign({ mail: obj.data.mail.toLowerCase(), userId: user._id.toString() }, process.env.ENCRYPTED_TOKEN, { expiresIn: '1h' });
-                // user.update({ resetPasswordToken: token })
-                //     .then(() => {
-                //         try {
-                //             sendGoogleEmailEjs({
-                //                 to: user.mail,
-                //                 subject: 'Reset Password',
-                //                 templetName: 'resetPassword',
-                //                 dataTemplet: {
-                //                     title: 'Reset Password',
-                //                     message: 'Click the password reset button, the link is only valid for one hour.',
-                //                     link: `${process.env.CLINTE_URL}/change-password/${user.mail}/${token}`,
-                //                 }
-                //             });
-                //             resolve();
-                //         } catch (error) {
-                //             reject(error.message);
-                //         }
-                //     }).catch(err => {
-                //         reject(error.message);
-                //     });
+                let verifyToken
+                try {
+                    verifyToken = jwt.verify(obj.data.resetToken, process.env.ENCRYPTED_TOKEN_SRESET_PASSWORD);
+                } catch (error) {
+                    reject(error.message);
+                };
+                if (obj.data.resetToken == user.resetPasswordToken) {
+                    user.update({
+                        password: encrypt(obj.data.password),
+                        resetPasswordToken: '',
+                    })
+                        .then(() => {
+                            resolve();
+                        }).catch(err => {
+                            reject(err.message);
+                        });
+                } else {
+                    reject('Invalid token: Your password has already changed at this link, please try again at another link in the lohin page.');
+                }
             } else {
                 reject('Email does not exist');
             }
