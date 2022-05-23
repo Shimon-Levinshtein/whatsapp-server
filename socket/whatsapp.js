@@ -78,6 +78,12 @@ class WebWhatsapp {
                 this.getWhatsappQrCode();
             }
         });
+        
+        this.socket.on(`request_contacts_id:${this.userId}`, () => {
+            this.client.getContacts().then(contacts => {
+                this.socket.emit(`response_contacts_id:${this.userId}`, { contacts: contacts });
+            });
+        });
     };
     changeSocket(socket) {
         if (this.socketId !== socket.id) {
