@@ -13,6 +13,7 @@ const usersRouter = require('./routes/users');
 const whatsappConnectionRouter = require('./routes/whatsapp/connection');
 const createEventsRouter = require('./routes/createEvents/createEvents');
 const auth = require('./middleware/auth');
+const { startAllEvents } = require('./evets/startAllEvents');
 
 
 
@@ -60,16 +61,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// sendGoogleEmailEjs({
-//   to: 'shimonwebdeveloper@gmail.com',
-//    subject: 'Welcome 4',
-//    templetName: 'registered',
-//     dataTemplet: {
-//       title: 'registered 17',
-//       message: 'Successfully registered :)',
-//       link: process.env.CLINTE_URL,
-//     }
-// });
+setTimeout(() => {
+  startAllEvents();
+}, 3000);
 
 
 module.exports = app;

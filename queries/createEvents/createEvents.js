@@ -1,5 +1,6 @@
 const { Event } = require('../../models/events');
 const { sendGoogleEmailEjs } = require('../../controllers/mail/sendMailEjs');
+const { createEventbyDate } = require('../../evets/schedule/byDate');
 
 module.exports.getEventsByUserId = (userData) => {
     return new Promise((resolve, reject) => {
@@ -21,6 +22,11 @@ module.exports.createEventsByType = (obj, userData) => {
             user: userData.userId,
         });
         event.save().then(data => {
+            createEventbyDate({
+                eventId: data._id.toString(),
+                eventData: data.data,
+                userId: data.user.toString(),
+            });
             resolve(data);
         }).catch(err => {
             reject(err.message);

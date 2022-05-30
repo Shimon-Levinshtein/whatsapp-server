@@ -61,29 +61,35 @@ class WebWhatsapp {
         };
     };
     openChannels() {
-        if (!this.isConnected && this.countSendQr == 0) {
-            this.getWhatsappQrCode();
-        }
-        this.socket.on('disconnect', () => {
-            this.destroySocketEvents();
-        });
-        this.socket.on(`check_whatsapp_connection_status_id:${this.userId}`, () => {
-            this.socket.emit(`res_whatsapp_connection_status_id:${this.userId}`, { status: this.isConnected });
-        });
-        this.socket.on(`check_interval_whatsapp_connection_status_id:${this.userId}`, () => {
-            this.socket.emit(`res_interval_whatsapp_connection_status_id:${this.userId}`, { status: this.isConnected });
-        });
-        this.socket.on(`request_qr_code_id:${this.userId}`, () => {
+        try {
             if (!this.isConnected && this.countSendQr == 0) {
                 this.getWhatsappQrCode();
             }
-        });
-        
-        this.socket.on(`request_contacts_id:${this.userId}`, () => {
-            this.client.getContacts().then(contacts => {
-                this.socket.emit(`response_contacts_id:${this.userId}`, { contacts: contacts });
+            this.socket.on('disconnect', () => {
+                this.destroySocketEvents();
             });
-        });
+            this.socket.on(`check_whatsapp_connection_status_id:${this.userId}`, () => {
+                this.socket.emit(`res_whatsapp_connection_status_id:${this.userId}`, { status: this.isConnected });
+            });
+            // this.socket.on(`check_interval_whatsapp_connection_status_id:${this.userId}`, () => {
+            //     this.socket.emit(`res_interval_whatsapp_connection_status_id:${this.userId}`, { status: this.isConnected });
+            // });
+            this.socket.on(`request_qr_code_id:${this.userId}`, () => {
+                if (!this.isConnected && this.countSendQr == 0) {
+                    this.getWhatsappQrCode();
+                }
+            });
+
+            this.socket.on(`request_contacts_id:${this.userId}`, () => {
+                if (this.isConnected) {
+                    this.client.getContacts().then(contacts => {
+                        this.socket.emit(`response_contacts_id:${this.userId}`, { contacts: contacts });
+                    });
+                }
+            });
+        } catch (error) {
+            console.log('error', error);
+        }
     };
     changeSocket(socket) {
         if (this.socketId !== socket.id) {
@@ -122,6 +128,20 @@ User.find({}).then(users => {
     console.log(err);
 });
 
+exports.addUserToWebWhatsapp = (user) => {
+    const userClass = new WebWhatsapp({
+        socketId: '',
+        socket: '',
+        userId: user._id.toString(),
+        name: user.name,
+        lestName: user.lestName,
+        mail: user.mail,
+        phone: user.phone,
+        token: user.token,
+    });
+    mapUsers.set(user._id.toString(), userClass);
+};
+
 const startIoConnecting = socket => {
     try {
         socket.on(`open_channel_whatsapp`, (data) => {
@@ -137,4 +157,5 @@ const startIoConnecting = socket => {
 };
 
 exports.startIoConnecting = startIoConnecting;
+exports.mapUsers = mapUsers;
 

@@ -2,6 +2,7 @@ const { User } = require('../../models/users');
 const jwt = require('jsonwebtoken');
 const { encrypt } = require('./crypt');
 const { sendGoogleEmailEjs } = require('../../controllers/mail/sendMailEjs');
+const { addUserToWebWhatsapp } = require('../../socket/whatsapp');
 
 module.exports.creatUser = obj => {
     return new Promise((resolve, reject) => {
@@ -21,6 +22,12 @@ module.exports.creatUser = obj => {
                 });
                 user.save().then(data => {
                     const token = jwt.sign({ mail: obj.data.mail.toLowerCase(), userId: data._id.toString() }, process.env.ENCRYPTED_TOKEN);
+                    data.token = token;
+                    try {
+                        addUserToWebWhatsapp(data);
+                    } catch (error) {
+                        console.log(error);
+                    }
                     user.update({ token: token })
                         .then(() => {
                             resolve({
