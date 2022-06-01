@@ -4,7 +4,21 @@ const { mapUsers } = require('../../socket/whatsapp');
 
 const byDateListEvents = new Map();
 
-exports.createEventbyDate = ({ eventId, eventData, userId }) => {
+exports.createEventbyDate = ({ eventId, eventData, userId, isEdit = false }) => {
+
+    if (isEdit) {
+        try {
+            if (byDateListEvents.has(eventId)) {
+                const event = byDateListEvents.get(eventId);
+                if (event) {
+                    event.cancel();
+                    byDateListEvents.delete(eventId);
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     if (new Date(eventData.date) < new Date()) {
         deleteEvent({ eventId, userId });
@@ -43,6 +57,13 @@ exports.createEventbyDate = ({ eventId, eventData, userId }) => {
 
 const deleteEvent = ({ eventId, userId }) => {
     try {
+        if (byDateListEvents.has(eventId)) {
+            const event = byDateListEvents.get(eventId);
+            if (event) {
+                event.cancel();
+                byDateListEvents.delete(eventId);
+            }
+        }
         Event.deleteOne({ _id: eventId, user: userId })
             .then(() => { }).catch(err => {
                 console.log(err.message);

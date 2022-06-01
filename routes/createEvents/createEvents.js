@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createEventsByType, getEventsByUserId, deleteEvents } = require('../../queries/createEvents/createEvents');
+const { createEventsByType, getEventsByUserId, deleteEvents, editEventsById } = require('../../queries/createEvents/createEvents');
 
 
 router.get('/get-user-events', function (req, res, next) {
@@ -19,6 +19,17 @@ router.post('/create-event-by-type', function (req, res, next) {
     .then(data => {
       res.send(data);
     }).catch(err => {
+      res.status(500).send({ error: err })
+    });
+});
+
+router.post('/edit-event-by-id', function (req, res, next) {
+  editEventsById(req.body, req.userData)
+    .then(data => {
+      res.send(data);
+    }).catch(err => {
+      console.log('err--------------------------------------');
+      console.log(err);
       res.status(500).send({ error: err })
     });
 });

@@ -5,7 +5,6 @@ module.exports.startAllEvents = () => {
     try {
         Event.find({})
             .then(events => {
-                console.log(events);
                 events.forEach(event => {
                     switch (event.type) {
                         case 'messageByDate':
@@ -13,6 +12,7 @@ module.exports.startAllEvents = () => {
                                 eventId: event._id.toString(),
                                 eventData: event.data,
                                 userId: event.user.toString(),
+                                isEdit: false,
                             });
                             break;
                         default:
