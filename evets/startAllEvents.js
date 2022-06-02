@@ -1,4 +1,5 @@
 const { Event } = require("../models/events");
+const { createEventbyDayInMonth } = require("./dayInMonth/dayInMonth");
 const { createEventbyDate } = require("./schedule/byDate");
 
 module.exports.startAllEvents = () => {
@@ -6,14 +7,18 @@ module.exports.startAllEvents = () => {
         Event.find({})
             .then(events => {
                 events.forEach(event => {
+                    const schema = {
+                        eventId: event._id.toString(),
+                        eventData: event.data,
+                        userId: event.user.toString(),
+                        isEdit: false,
+                    }
                     switch (event.type) {
                         case 'messageByDate':
-                            createEventbyDate({
-                                eventId: event._id.toString(),
-                                eventData: event.data,
-                                userId: event.user.toString(),
-                                isEdit: false,
-                            });
+                            createEventbyDate(schema);
+                            break;
+                        case 'EveryMonthByDayInMonth':
+                            createEventbyDayInMonth(schema);
                             break;
                         default:
                             break;

@@ -1,6 +1,8 @@
 const { Event } = require('../../models/events');
 const { sendGoogleEmailEjs } = require('../../controllers/mail/sendMailEjs');
-const { createEventbyDate } = require('../../evets/schedule/byDate');
+const { createEventbyDate, deleteEventByDate } = require('../../evets/schedule/byDate');
+const { switchCreateEventsByType } = require('./switchCreateEvents');
+const { switchDeleteEventsByType } = require('./switchDeleteEvents');
 
 module.exports.getEventsByUserId = (userData) => {
     return new Promise((resolve, reject) => {
@@ -22,7 +24,7 @@ module.exports.createEventsByType = (obj, userData) => {
             user: userData.userId,
         });
         event.save().then(data => {
-            createEventbyDate({
+            switchCreateEventsByType({
                 eventId: data._id.toString(),
                 eventData: data.data,
                 userId: data.user.toString(),
@@ -35,7 +37,6 @@ module.exports.createEventsByType = (obj, userData) => {
     });
 };
 module.exports.editEventsById = (obj, userData) => {
-    console.log(obj);
     return new Promise((resolve, reject) => {
         Event.findOneAndUpdate(
             {
@@ -50,9 +51,7 @@ module.exports.editEventsById = (obj, userData) => {
             { new: true }
         )
             .then(data => {
-                console.log('//////////////////////////////////////////////////');
-                console.log(data);
-                createEventbyDate({
+                switchCreateEventsByType({
                     eventId: data._id.toString(),
                     eventData: data.data,
                     userId: data.user.toString(),
@@ -66,6 +65,16 @@ module.exports.editEventsById = (obj, userData) => {
 };
 module.exports.deleteEvents = (eventId, userData) => {
     return new Promise((resolve, reject) => {
+        try {
+            Event.findOneAndUpdate({_id: eventId})
+                .then(data => {
+                    switchDeleteEventsByType(eventId, data.type)
+                }).catch(err => {
+                    reject(err.message);
+                });
+        } catch (error) {
+            reject(err.message);
+        }
         Event.deleteOne({ _id: eventId, user: userData.userId })
             .then(data => {
                 resolve(data);

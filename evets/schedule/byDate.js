@@ -1,11 +1,11 @@
 const schedule = require('node-schedule');
 const { Event } = require('../../models/events');
 const { mapUsers } = require('../../socket/whatsapp');
+const { sendMessage } = require('../sendMessage/sendMessage');
 
 const byDateListEvents = new Map();
 
 exports.createEventbyDate = ({ eventId, eventData, userId, isEdit = false }) => {
-
     if (isEdit) {
         try {
             if (byDateListEvents.has(eventId)) {
@@ -25,29 +25,7 @@ exports.createEventbyDate = ({ eventId, eventData, userId, isEdit = false }) => 
         return;
     };
     const event = schedule.scheduleJob(eventData.date, () => {
-        const user = mapUsers.get(userId);
-        if (user.isConnected) {
-            user.client.getContacts().then(contacts => {
-                const contactsList = [];
-                eventData.contactsList.forEach(cont => {
-                    let result = false;
-                    if (cont.name !== 'Not a contact') {
-                        result = contacts.find((c) => c.name === cont.name);
-                    } else {
-                        if (cont.phone) {
-                            result = contacts.find((c) => c.phone === cont.phone);
-                        }
-                    }
-                    if (result) {
-                        contactsList.push(result);
-                    }
-                });
-                contactsList.forEach(contactToSend => {
-                    user.client.sendMessage(contactToSend.id._serialized, eventData.message);
-                });
-                user.socket.emit(`response_event_ended_id:${userId}`, { eventId: eventId });
-            });
-        }
+        sendMessage({ eventId, eventData, userId });
         event.cancel();
         byDateListEvents.delete(eventId);
         deleteEvent({ eventId, userId });
@@ -72,5 +50,18 @@ const deleteEvent = ({ eventId, userId }) => {
     } catch (error) {
         console.log(error);
     }
-
 };
+const deleteEventByDate = (eventId) => {
+    try {
+        if (byDateListEvents.has(eventId)) {
+            const event = byDateListEvents.get(eventId);
+            if (event) {
+                event.cancel();
+                byDateListEvents.delete(eventId);
+            }
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
+exports.deleteEventByDate = deleteEventByDate;
