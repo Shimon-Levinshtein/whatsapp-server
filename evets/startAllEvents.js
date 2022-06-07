@@ -1,5 +1,6 @@
 const { Event } = require("../models/events");
 const { createEventbyDayInMonth } = require("./dayInMonth/dayInMonth");
+const { inComingMessage } = require("./inComingMessage/inComingMessage");
 const { createEventbyDate } = require("./schedule/byDate");
 
 module.exports.startAllEvents = () => {
@@ -19,6 +20,9 @@ module.exports.startAllEvents = () => {
                             break;
                         case 'EveryMonthByDayInMonth':
                             createEventbyDayInMonth(schema);
+                            break;
+                        case 'messageByTextReceived':
+                            inComingMessage(schema);
                             break;
                         default:
                             break;

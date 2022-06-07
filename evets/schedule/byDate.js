@@ -1,6 +1,5 @@
 const schedule = require('node-schedule');
 const { Event } = require('../../models/events');
-const { mapUsers } = require('../../socket/whatsapp');
 const { sendMessage } = require('../sendMessage/sendMessage');
 
 const byDateListEvents = new Map();

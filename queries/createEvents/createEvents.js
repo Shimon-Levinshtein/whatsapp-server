@@ -66,21 +66,21 @@ module.exports.editEventsById = (obj, userData) => {
 module.exports.deleteEvents = (eventId, userData) => {
     return new Promise((resolve, reject) => {
         try {
-            Event.findOneAndUpdate({_id: eventId})
+            Event.findOne({ _id: eventId })
                 .then(data => {
-                    switchDeleteEventsByType(eventId, data.type)
+                    switchDeleteEventsByType(eventId, data.type, userData.userId);
+                    Event.deleteOne({ _id: eventId, user: userData.userId })
+                        .then(data => {
+                            resolve(data);
+                        }).catch(err => {
+                            reject(err.message);
+                        }
+                        );
                 }).catch(err => {
                     reject(err.message);
                 });
         } catch (error) {
             reject(err.message);
         }
-        Event.deleteOne({ _id: eventId, user: userData.userId })
-            .then(data => {
-                resolve(data);
-            }).catch(err => {
-                reject(err.message);
-            }
-            );
     });
 };

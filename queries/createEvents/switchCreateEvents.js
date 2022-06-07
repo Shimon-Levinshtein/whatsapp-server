@@ -1,4 +1,5 @@
 const { createEventbyDayInMonth } = require("../../evets/dayInMonth/dayInMonth");
+const { inComingMessage } = require("../../evets/inComingMessage/inComingMessage");
 const { createEventbyDate } = require("../../evets/schedule/byDate");
 
 module.exports.switchCreateEventsByType = (data) => {
@@ -9,6 +10,9 @@ module.exports.switchCreateEventsByType = (data) => {
             break;
         case 'EveryMonthByDayInMonth':
             createEventbyDayInMonth(data);
+            break;
+        case 'messageByTextReceived':
+            inComingMessage(data);
             break;
         default:
             break;
