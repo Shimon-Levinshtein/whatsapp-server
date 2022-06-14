@@ -8,6 +8,8 @@ var app = require('../app');
 var debug = require('debug')('my-whatsapp-test:server');
 var http = require('http');
 const { startIoConnecting } = require('../socket/whatsapp');
+const jwt = require('jsonwebtoken');
+
 // const { Server } = require("socket.io");
 
 /**
@@ -49,14 +51,21 @@ const io = require('../socket')
     }
   });
 
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (token) {
+    try {
+      verifyToken = jwt.verify(token, process.env.ENCRYPTED_TOKEN);
+      next();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }
+});
+
 io.on('connection', socket => {
-  // socket.on("open_channel_whatsapp", (data) => {
-  //   // socket.join(data);
-  //   console.log(`open_channel_whatsapp WWW..: ${socket.id} joined room: ${data}`);
-  // });
   console.log('a user connected: ' + socket.id);
   startIoConnecting(socket);
-
   socket.on('disconnect', () => {
     console.log('user disconnected - id: ' + socket.id);
   });

@@ -1,9 +1,11 @@
+const mapUsers = new Map();
+exports.mapUsers = mapUsers;
 const { Client } = require('whatsapp-web.js');
 const { User } = require('../models/users');
 // const io = require('../socket');
 
 
-const mapUsers = new Map();
+const { listenMessages } = require('../evets/inComingMessage/inComingMessage');
 class WebWhatsapp {
     constructor({ name, lestName, mail, phone, token, userId, socketId, socket }) {
         this.userId = userId;
@@ -36,7 +38,7 @@ class WebWhatsapp {
                     this.socket.emit(`on_whatsapp_disconnected_id:${this.userId}`, {});
                 }
             });
-            this.client.on('ready', () => {
+            this.client.on('ready', e => {
                 this.isConnected = true;
                 this.client.getContacts().then(contacts => {
                     this.socket.emit(`on_whatsapp_connected_id:${this.userId}`, { contacts: contacts });
@@ -46,15 +48,9 @@ class WebWhatsapp {
                     this.countSendQr = 0;
                     this.socket.emit(`on_whatsapp_disconnected_id:${this.userId}`, { error: error });
                 });
-                // console.log('Client is ready!***');
-                // client.getChats().then(chats => {
-                //     console.log('Chats:', chats);
-                //     const myGroup = chats.find((group) => group.name === 'test');
-                //     const elisheva = chats.find((group) => group.name === 'אלישבע מוגן');
-                //     console.log('My group:', myGroup);
-                //     // client.sendMessage(elisheva.id._serialized, '...');
-                //     // client.sendMessage(myGroup.id._serialized, 'Hello world!');
-                // })
+                this.client.on('message', message => {
+                    listenMessages(this.userId, message);
+                });
             });
         } catch (error) {
             console.log('error', error);
@@ -86,6 +82,40 @@ class WebWhatsapp {
                         this.socket.emit(`response_contacts_id:${this.userId}`, { contacts: contacts });
                     });
                 }
+            });
+            this.socket.on(`request_chats_id:${this.userId}`, () => {
+                if (this.isConnected) {
+                    const chatsPromise = new Promise((resolve, reject) => {
+                        try {
+
+                            this.client.getChats().then(chats => {
+                                const newChats = [];
+                                chats.forEach(chat => {
+                                    chat.fetchMessages().then(messages => {
+                                        console.count('chats.id._serialized : ' + chat.id._serialized + ' >>> ');
+                                        this.client.getProfilePicUrl(chat.id._serialized).then(imgUrl => {
+                                            newChats.push({
+                                                ...chat,
+                                                chats: messages,
+                                                imgUrl: imgUrl ? imgUrl : '',
+                                            });
+                                            if (newChats.length == chats.length) {
+                                                resolve(newChats);
+                                            };
+                                        });
+                                    });
+                                });
+                            });
+                        } catch (error) {
+                            reject(error)
+                        }
+                    })
+                    chatsPromise.then(data => {
+                        this.socket.emit(`response_chats_id:${this.userId}`, {
+                            chats: data,
+                        });
+                    }).catch(err => console.log(err))
+                };
             });
         } catch (error) {
             console.log('error', error);
@@ -157,5 +187,4 @@ const startIoConnecting = socket => {
 };
 
 exports.startIoConnecting = startIoConnecting;
-exports.mapUsers = mapUsers;
 
