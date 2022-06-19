@@ -92,7 +92,6 @@ class WebWhatsapp {
                                 const newChats = [];
                                 chats.forEach(chat => {
                                     chat.fetchMessages().then(messages => {
-                                        console.count('chats.id._serialized : ' + chat.id._serialized + ' >>> ');
                                         this.client.getProfilePicUrl(chat.id._serialized).then(imgUrl => {
                                             newChats.push({
                                                 ...chat,
@@ -116,6 +115,36 @@ class WebWhatsapp {
                         });
                     }).catch(err => console.log(err))
                 };
+            });
+            this.socket.on(`get_chats_by_chatId_id:${this.userId}`, chatId => {
+                const chatsPromise = new Promise((resolve, reject) => {
+                    this.client.getChatById(chatId)
+                        .then(chat => {
+                            chat.fetchMessages().then(messages => {
+                                const newChats = [];
+                                messages.forEach(async element => {
+                                    let media = '';
+                                    if (element.hasMedia) {
+                                        media = await element.downloadMedia();
+                                    }
+                                    newChats.push({
+                                        ...element,
+                                        media: media,
+                                    });
+                                    if (newChats.length == messages.length) {
+                                        resolve(newChats);
+                                    };
+                                });
+
+                            }).catch(err => console.log(err))
+                        }).catch(err => console.log(err))
+                    })
+                    chatsPromise.then(data => {
+                        this.socket.emit(`response_chats_by_chatId_id:${this.userId}`, {
+                            chat: data,
+                            chatId: chatId,
+                        });
+                    }).catch(err => console.log(err))
             });
         } catch (error) {
             console.log('error', error);

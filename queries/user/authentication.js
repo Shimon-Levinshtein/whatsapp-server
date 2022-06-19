@@ -52,7 +52,7 @@ module.exports.creatUser = obj => {
                             reject(error.message);
                         });
                 }).catch(err => {
-                    reject(error.message);
+                    reject(err.message);
                 });
             }
         });
@@ -79,7 +79,7 @@ module.exports.login = obj => {
                                 token: token,
                             });
                         }).catch(err => {
-                            reject(error.message);
+                            reject(err.message);
                         });
                 } else {
                     reject('Wrong password');
