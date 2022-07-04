@@ -41,8 +41,13 @@ class WebWhatsapp {
             this.client.on('ready', e => {
                 this.isConnected = true;
                 this.client.getContacts().then(contacts => {
-                    this.socket.emit(`on_whatsapp_connected_id:${this.userId}`, { contacts: contacts });
-                });
+                    this.client.getProfilePicUrl(this.client.info.me._serialized).then(imageUrl => {
+                        this.socket.emit(`on_whatsapp_connected_id:${this.userId}`, {
+                            contacts: contacts,
+                            clientInfo: { ...this.client.info, imageUrl },
+                        });
+                    }).catch(err => console.log(err));
+                }).catch(err => console.log(err));
                 this.client.on('disconnected', (error) => {
                     this.isConnected = false;
                     this.countSendQr = 0;
@@ -79,41 +84,67 @@ class WebWhatsapp {
             this.socket.on(`request_contacts_id:${this.userId}`, () => {
                 if (this.isConnected) {
                     this.client.getContacts().then(contacts => {
-                        this.socket.emit(`response_contacts_id:${this.userId}`, { contacts: contacts });
-                    });
+                        this.client.getProfilePicUrl(this.client.info.me._serialized).then(imageUrl => {
+                            this.socket.emit(`response_contacts_id:${this.userId}`, {
+                                contacts: contacts,
+                                clientInfo: { ...this.client.info, imageUrl },
+                            });
+                        }).catch(err => console.log(err));
+                    }).catch(err => console.log(err));
                 }
             });
             this.socket.on(`request_chats_id:${this.userId}`, () => {
                 if (this.isConnected) {
-                    const chatsPromise = new Promise((resolve, reject) => {
-                        try {
+                    const chatHeandler = async () => {
 
-                            this.client.getChats().then(chats => {
-                                const newChats = [];
-                                chats.forEach(chat => {
-                                    chat.fetchMessages().then(messages => {
-                                        this.client.getProfilePicUrl(chat.id._serialized).then(imgUrl => {
-                                            newChats.push({
-                                                ...chat,
-                                                chats: messages,
-                                                imgUrl: imgUrl ? imgUrl : '',
-                                            });
-                                            if (newChats.length == chats.length) {
-                                                resolve(newChats);
-                                            };
-                                        });
-                                    });
-                                });
-                            });
-                        } catch (error) {
-                            reject(error)
-                        }
-                    })
-                    chatsPromise.then(data => {
-                        this.socket.emit(`response_chats_id:${this.userId}`, {
-                            chats: data,
+                        const chats = await this.client.getChats();
+                        const chatWithMsgPromisArr = chats.map(async chat => {
+                            const chats = await chat.fetchMessages();
+                            const imageUrl = await this.client.getProfilePicUrl(chat.id._serialized);
+                            return { ...chat, chats, imageUrl }
                         });
-                    }).catch(err => console.log(err))
+                        const chatWithMsg = await Promise.all(chatWithMsgPromisArr);
+                        this.socket.emit(`response_chats_id:${this.userId}`, {
+                            chats: chatWithMsg
+                        });
+                    };
+                    chatHeandler();
+                    // chatHeandler.then(data => {
+                    //     this.socket.emit(`response_chats_id:${this.userId}`, {
+                    //         chats: data,
+                    //     });
+                    // }).catch(err => console.log(err))
+
+
+                    // const chatsPromise = new Promise((resolve, reject) => {
+                    //     try {
+
+                    //         this.client.getChats().then(chats => {
+                    //             const newChats = [];
+                    //             chats.forEach(chat => {
+                    //                 chat.fetchMessages().then(messages => {
+                    //                     this.client.getProfilePicUrl(chat.id._serialized).then(imgUrl => {
+                    //                         newChats.push({
+                    //                             ...chat,
+                    //                             chats: messages,
+                    //                             imgUrl: imgUrl ? imgUrl : '',
+                    //                         });
+                    //                         if (newChats.length == chats.length) {
+                    //                             resolve(newChats);
+                    //                         };
+                    //                     });
+                    //                 });
+                    //             });
+                    //         });
+                    //     } catch (error) {
+                    //         reject(error)
+                    //     }
+                    // })
+                    // chatsPromise.then(data => {
+                    //     this.socket.emit(`response_chats_id:${this.userId}`, {
+                    //         chats: data,
+                    //     });
+                    // }).catch(err => console.log(err))
                 };
             });
             this.socket.on(`get_chats_by_chatId_id:${this.userId}`, chatId => {
@@ -129,7 +160,7 @@ class WebWhatsapp {
                                     }
                                     newChats.push({
                                         ...element,
-                                        media: media,
+                                        media: media ? media : 'x',
                                     });
                                     if (newChats.length == messages.length) {
                                         resolve(newChats);
@@ -138,13 +169,13 @@ class WebWhatsapp {
 
                             }).catch(err => console.log(err))
                         }).catch(err => console.log(err))
-                    })
-                    chatsPromise.then(data => {
-                        this.socket.emit(`response_chats_by_chatId_id:${this.userId}`, {
-                            chat: data,
-                            chatId: chatId,
-                        });
-                    }).catch(err => console.log(err))
+                })
+                chatsPromise.then(data => {
+                    this.socket.emit(`response_chats_by_chatId_id:${this.userId}`, {
+                        chat: data,
+                        chatId: chatId,
+                    });
+                }).catch(err => console.log(err))
             });
         } catch (error) {
             console.log('error', error);

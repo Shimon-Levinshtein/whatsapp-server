@@ -33,6 +33,8 @@ exports.sendMessage = ({ eventId, eventData, userId }) => {
                     }
                 });
                 contactsList.forEach(contactToSend => {
+                    console.log('contactToSend.....................................................');
+                    console.log(contactToSend);
                     user.client.sendMessage(contactToSend.id._serialized, eventData.message);
                 });
                 user.socket.emit(`response_event_ended_id:${userId}`, {
